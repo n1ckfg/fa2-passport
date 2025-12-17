@@ -5,16 +5,16 @@ import { TezosToolkit } from "@taquito/taquito";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 
-const CONTRACT_ADDRESS = "KT18d9H7uvH6LAJ76ZkqmXfZ6RTYcsyifiQa";
+const CONTRACT_ADDRESS = "KT1V4TkwBWoLw1JWthkiFBNEoRvpEDf3B1Qh";
 const MINT_PRICE = 100000; // 0.1 tez in mutez
 const RPC_URL = "https://rpc.tzkt.io/ghostnet";
 
 const emojiMap = {
-  UK: "🇬🇧",
-  US: "🇺🇸",
-  France: "🇫🇷",
-  Germany: "🇩🇪",
-  Nigeria: "🇳🇬",
+  uk: "🇬🇧",
+  us: "🇺🇸",
+  france: "🇫🇷",
+  germany: "🇩🇪",
+  nigeria: "🇳🇬",
 };
 
 export default function Home() {
@@ -394,7 +394,11 @@ export default function Home() {
           </div>
           <div className="passport-info">
             <div>OWNER: {walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : 'Not connected'}</div>
-            <div>STATUS: VALID / ACTIF</div>
+            <div style={{ 
+              color: (!walletAddress || !currentPassport) ? '#ff0000' : '#444'
+            }}>
+              STATUS: {(!walletAddress || !currentPassport) ? 'INVALID' : 'VALID / ACTIF'}
+            </div>
             <div style={{ marginTop: '5px', color: '#8b0000', fontWeight: 'bold' }}>GHOSTNET PROTOTYPE</div>
           </div>
         </div>

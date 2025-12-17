@@ -66,8 +66,8 @@ def my_module():
             # ----------------------------------------------------
             token_info = {
                 "name": sp.bytes("0x50617373706f7274"),  # "Passport"
-                "symbol": sp.bytes("0x545a5043"),        # "TZPC"
-                "decimals": sp.bytes("0x00"),            # 0
+                "symbol": sp.bytes("0x545A50415353"),  # "TZPASS"
+                "decimals": sp.bytes("0x30"),            # 0
             }
 
             # Store token metadata
