@@ -47,6 +47,53 @@ export default function BrowsePage() {
     }
   };
 
+  // Reset/Change Wallet - Clears storage and allows selecting a new wallet
+  const resetWallet = async () => {
+    setMessage("");
+    try {
+      // Clear active account if wallet exists
+      if (walletRef.current && walletRef.current != "disconnected") {
+        try {
+          await walletRef.current.client.disconnect();
+        } catch (e) {
+          // If disconnect fails, try clearActiveAccount
+          walletRef.current.client.clearActiveAccount();
+        }
+      }
+
+      // Clear wallet reference
+      walletRef.current = null;
+      setWalletAddress("");
+
+      // Clear Beacon storage from browser
+      try {
+        // Clear localStorage items related to Beacon
+        const keys = Object.keys(localStorage);
+        keys.forEach(key => {
+          if (key.startsWith('beacon') || key.startsWith('walletconnect')) {
+            localStorage.removeItem(key);
+          }
+        });
+
+        // Clear sessionStorage
+        const sessionKeys = Object.keys(sessionStorage);
+        sessionKeys.forEach(key => {
+          if (key.startsWith('beacon') || key.startsWith('walletconnect')) {
+            sessionStorage.removeItem(key);
+          }
+        });
+      } catch (e) {
+        console.log("Error clearing storage:", e);
+      }
+
+      setMessage("Wallet reset. You can now connect a different wallet.");
+      console.log("Wallet reset - storage cleared");
+    } catch (error) {
+      console.error("Error resetting wallet:", error);
+      setMessage(error.message || "Error resetting wallet");
+    }
+  };
+
   // Load all passports from contract
   const loadAllPassports = async () => {
     try {
@@ -94,14 +141,8 @@ export default function BrowsePage() {
     }
   };
 
-  // Try to stamp a passport (should fail if not owner)
+  // Try to stamp a passport (should fail if not owner) - uses same method as landing page
   const tryStamp = async (passport) => {
-    if (!walletAddress) {
-      setMessage("Please connect your wallet first");
-      await connectWallet();
-      if (!walletAddress) return;
-    }
-
     if (passport.owner === walletAddress) {
       setMessage("This is your passport! Use the main page to stamp it.");
       return;
@@ -112,32 +153,42 @@ export default function BrowsePage() {
       return;
     }
 
+    // Get the country key, case-insensitive
     const countryKey = Object.keys(emojiMap).find(
       key => key.toLowerCase() === countryInput.trim().toLowerCase()
     );
-
+    
     if (!countryKey) {
       setMessage(`Invalid country code. Please use one of: ${Object.keys(emojiMap).join(", ")}`);
       return;
     }
 
+    // Send the country string to the contract (not the emoji)
+    const countryString = countryKey;
+
     try {
-      setMessage("Attempting to stamp (this should fail if you're not the owner)...");
-      
-      // This will fail if the user doesn't own the passport
+      await connectWallet();
+
       const contract = await Tezos.wallet.at(CONTRACT_ADDRESS);
       const op = await contract.methodsObject
         .stamp({
           token_id: passport.tokenId,
-          emoji: countryKey,
+          emoji: countryString,
         })
         .send();
 
-      await op.confirmation(2);
-      setMessage("Stamp added (unexpected - you shouldn't own this passport)");
+      setMessage("One minute. Getting your passport stamped");
+      const hash  = await op.confirmation(2);
+      console.log("hash: ", hash);
+
+      if (hash) {
+        setMessage("Stamp added successfully!");
+        // Reload passports to show updated state
+        await loadAllPassports();
+      }
     } catch (error) {
-      setMessage(`❌ Error: ${error.message || "You cannot stamp a passport you don't own!"}`);
-      console.log("Expected error:", error);
+      setMessage(error.message || "You cannot stamp a passport you don't own!");
+      console.log(error);
     }
   };
 
@@ -158,9 +209,14 @@ export default function BrowsePage() {
             </div>
           </div>
         ) : (
-          <button className="btn-wallet" onClick={connectWallet}>
-            Connect Wallet
-          </button>
+          <div className="wallet-info">
+            <button className="btn-wallet" onClick={connectWallet}>
+              Connect Wallet
+            </button>
+            <button className="btn-wallet" onClick={resetWallet}>
+              Reset Wallet
+            </button>
+          </div>
         )}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>

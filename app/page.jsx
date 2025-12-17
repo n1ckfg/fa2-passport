@@ -85,6 +85,55 @@ export default function Home() {
     }
   };
 
+  // Reset/Change Wallet - Clears storage and allows selecting a new wallet
+  const resetWallet = async () => {
+    setMessage("");
+    try {
+      // Clear active account if wallet exists
+      if (walletRef.current && walletRef.current != "disconnected") {
+        try {
+          await walletRef.current.client.disconnect();
+        } catch (e) {
+          // If disconnect fails, try clearActiveAccount
+          walletRef.current.client.clearActiveAccount();
+        }
+      }
+
+      // Clear wallet reference
+      walletRef.current = null;
+      setWalletAddress("");
+      setPassports([]);
+      setCurrentPassportIndex(-1);
+
+      // Clear Beacon storage from browser
+      try {
+        // Clear localStorage items related to Beacon
+        const keys = Object.keys(localStorage);
+        keys.forEach(key => {
+          if (key.startsWith('beacon') || key.startsWith('walletconnect')) {
+            localStorage.removeItem(key);
+          }
+        });
+
+        // Clear sessionStorage
+        const sessionKeys = Object.keys(sessionStorage);
+        sessionKeys.forEach(key => {
+          if (key.startsWith('beacon') || key.startsWith('walletconnect')) {
+            sessionStorage.removeItem(key);
+          }
+        });
+      } catch (e) {
+        console.log("Error clearing storage:", e);
+      }
+
+      setMessage("Wallet reset. You can now connect a different wallet.");
+      console.log("Wallet reset - storage cleared");
+    } catch (error) {
+      console.error("Error resetting wallet:", error);
+      setMessage(error.message || "Error resetting wallet");
+    }
+  };
+
   // Load passports from contract storage
   const loadPassports = async () => {
     if (!walletAddress) return;
@@ -301,9 +350,14 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <button className="btn-wallet" onClick={connectWallet}>
-            Connect Wallet
-          </button>
+          <div className="wallet-info">
+            <button className="btn-wallet" onClick={connectWallet}>
+              Connect Wallet
+            </button>
+            <button className="btn-wallet" onClick={resetWallet}>
+              Reset Wallet
+            </button>
+          </div>
         )}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
