@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Passport NFT Demo
+
+This demo is part of the **Tezos FA2 Fellowship | Session 3: Behavioral Logic in FA2** in collaboration with **MoMI - Museum of the Moving Image in New York**.
+
+## Purpose
+
+This project demonstrates how to use FA2 contracts for:
+- **Interactivity** - Users can interact with their NFTs through on-chain operations
+- **Generativity** - NFTs can be customized and modified after minting
+- **Distribution** - Showcasing how FA2 enables dynamic, user-driven NFT experiences
+
+## Overview
+
+This is a Passport NFT application built on Tezos that allows users to:
+- Mint passport NFTs (0.1 ꜩ)
+- Add country flag stamps to their passports
+- Change the spine color of their passports
+- View and navigate between multiple passports
+
+All interactions are stored on-chain using a SmartPy FA2 contract, demonstrating how behavioral logic can be implemented in FA2 NFTs.
+
+## Technology Stack
+
+- **Frontend**: Next.js 16, React
+- **Blockchain**: Tezos (Ghostnet)
+- **Wallet Integration**: Beacon Wallet (@taquito/beacon-wallet)
+- **Smart Contract**: FA2 NFT contract written in SmartPy
+- **Styling**: CSS with DotGothic16 font
 
 ## Getting Started
 
-First, run the development server:
+First, install the dependencies:
+
+```bash
+npm install
+```
+
+Then, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Building for Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
+
+## Features
+
+- **Connect Wallet**: Connect your Tezos wallet using Beacon Wallet
+- **Issue Passport**: Mint a new passport NFT for 0.1 ꜩ
+- **Stamp Page**: Add country flag stamps (UK, US, France, Germany, Nigeria)
+- **Change Spine Color**: Customize the passport spine color
+- **View Multiple Passports**: Navigate between your owned passports
+
+## Smart Contract
+
+The smart contract is an FA2 NFT contract that implements:
+- Standard FA2 NFT functionality
+- Custom postcard/passport state storage
+- Interactive entrypoints for stamping and changing background colors
+- On-chain storage of all modifications
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+This demo is part of the Tezos FA2 Fellowship program, teaching developers how to build interactive and generative NFT experiences using FA2 contracts on Tezos.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+For more information about:
+- **FA2 Standard**: [TZIP-12](https://gitlab.com/tezos/tzip/-/blob/master/proposals/tzip-12/tzip-12.md)
+- **Tezos**: [tezos.com](https://tezos.com)
+- **Next.js**: [nextjs.org](https://nextjs.org)
