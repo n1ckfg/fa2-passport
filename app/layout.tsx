@@ -19,8 +19,8 @@ const dotGothic16 = DotGothic16({
 });
 
 export const metadata: Metadata = {
-  title: "Postcard NFT Prototype",
-  description: "Mint and display postcard NFTs",
+  title: "Passport NFT Prototype",
+  description: "Mint and display passport NFTs",
 };
 
 export default function RootLayout({

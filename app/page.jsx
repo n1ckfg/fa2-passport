@@ -3,8 +3,9 @@
 import { BeaconWallet } from "@taquito/beacon-wallet";
 import { TezosToolkit } from "@taquito/taquito";
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 
-const CONTRACT_ADDRESS = "KT1Ke54yJ6HaWoE99Zp7b3MB6QXDo9yEmn17";
+const CONTRACT_ADDRESS = "KT18d9H7uvH6LAJ76ZkqmXfZ6RTYcsyifiQa";
 const MINT_PRICE = 100000; // 0.1 tez in mutez
 const RPC_URL = "https://rpc.tzkt.io/ghostnet";
 
@@ -21,8 +22,8 @@ export default function Home() {
   const Tezos = new TezosToolkit(RPC_URL);
 
   // Step 3 - Set state to display content on the screen
-  const [postcards, setPostcards] = useState([]);
-  const [currentPostcardIndex, setCurrentPostcardIndex] = useState(-1);
+  const [passports, setPassports] = useState([]);
+  const [currentPassportIndex, setCurrentPassportIndex] = useState(-1);
   const [message, setMessage] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
   const [reload, setReload] = useState(false);
@@ -30,9 +31,9 @@ export default function Home() {
   // Step 4 - Set a wallet ref to hold the wallet instance later
   const walletRef = useRef(null);
 
-  // Background color options - brighter colors
-  const backgroundColors = [
-    "black",
+  // Spine color options - brighter colors
+  const spineColors = [
+    "#000000", // black
     "#FF6B6B", // Bright red
     "#4ECDC4", // Bright teal
     "#45B7D1", // Bright blue
@@ -50,7 +51,7 @@ export default function Home() {
     setMessage("");
     try {
       const options = {
-        name: "Postcard NFT Prototype",
+        name: "Passport NFT Prototype",
         network: { type: "ghostnet" },
       };
       const wallet = new BeaconWallet(options);
@@ -61,6 +62,8 @@ export default function Home() {
       // Get the wallet address after connecting
       const address = await wallet.getPKH();
       setWalletAddress(address);
+      // Load passports after connecting
+      await loadPassports();
     } catch (error) {
       console.error(error);
       setMessage(error.message);
@@ -74,24 +77,24 @@ export default function Home() {
       walletRef.current?.client.clearActiveAccount();
       walletRef.current = "disconnected";
       setWalletAddress("");
-      setPostcards([]);
-      setCurrentPostcardIndex(-1);
+      setPassports([]);
+      setCurrentPassportIndex(-1);
       console.log("Disconnected");
     } else {
       console.log("Already disconnected");
     }
   };
 
-  // Load postcards from contract storage
-  const loadPostcards = async () => {
+  // Load passports from contract storage
+  const loadPassports = async () => {
     if (!walletAddress) return;
 
     try {
       const contract = await Tezos.contract.at(CONTRACT_ADDRESS);
       const storage = await contract.storage();
-    console.log("storage: ", storage);
-      // Get all postcards owned by the connected wallet
-      const userPostcards = [];
+      console.log("storage: ", storage);
+      // Get all passports owned by the connected wallet
+      const userPassports = [];
       
       // Get next_token_id to know how many tokens exist
       const nextTokenId = storage.next_token_id ? Number(storage.next_token_id) : 0;
@@ -113,16 +116,15 @@ export default function Home() {
         }
       }
 
-      // Load postcard data for each owned token
+      // Load passport data for each owned token
       for (const tokenId of tokenIds) {
         try {
-          const postcardData = await storage.postcards.get(tokenId);
+          const passportData = await storage.passports.get(tokenId);
           
-          if (postcardData) {
-            // Handle the postcard data structure
-            const background = postcardData.background || "black";
-            const greeting = postcardData.greeting || "";
-            const stamps = postcardData.stamps || [];
+          if (passportData) {
+            // Handle the passport data structure
+            const spineColor = passportData.spine_color || "#000000";
+            const stamps = passportData.stamps || [];
             
             // Map country strings from chain to emojis for display
             const stampsWithEmojis = Array.isArray(stamps) 
@@ -133,45 +135,44 @@ export default function Home() {
                 })
               : [];
             
-            userPostcards.push({
+            userPassports.push({
               tokenId: tokenId,
-              backgroundColor: typeof background === 'string' ? background : "black",
-              greeting: typeof greeting === 'string' ? greeting : "",
+              spineColor: typeof spineColor === 'string' ? spineColor : "#000000",
               stamps: stampsWithEmojis,
             });
           }
         } catch (e) {
-          console.error(`Error loading postcard ${tokenId}:`, e);
+          console.error(`Error loading passport ${tokenId}:`, e);
         }
       }
 
       // Sort by token ID
-      userPostcards.sort((a, b) => a.tokenId - b.tokenId);
+      userPassports.sort((a, b) => a.tokenId - b.tokenId);
       
-      setPostcards(userPostcards);
-      if (userPostcards.length > 0 && currentPostcardIndex < 0) {
-        setCurrentPostcardIndex(0);
-      } else if (userPostcards.length === 0) {
-        setCurrentPostcardIndex(-1);
+      setPassports(userPassports);
+      if (userPassports.length > 0 && currentPassportIndex < 0) {
+        setCurrentPassportIndex(0);
+      } else if (userPassports.length === 0) {
+        setCurrentPassportIndex(-1);
       }
     } catch (error) {
-      console.error("Error loading postcards:", error);
-      setMessage(error.message || "Error loading postcards");
+      console.error("Error loading passports:", error);
+      setMessage(error.message || "Error loading passports");
     }
   };
 
-  // Function 2: Mint Postcard
-  const mintPostcard = async () => {
+  // Function 2: Mint Passport
+  const mintPassport = async () => {
     try {
       await connectWallet();
 
       const contract = await Tezos.wallet.at(CONTRACT_ADDRESS);
-      const op = await contract.methodsObject.mint_postcard().send({
+      const op = await contract.methodsObject.mint_passport().send({
         amount: MINT_PRICE,
         mutez: true,
       });
 
-      setMessage("One minute. Getting your passport stamped");
+      setMessage("Issuing your passport...");
       const hash  = await op.confirmation(2);
       console.log("hash: ", hash);
 
@@ -185,25 +186,25 @@ export default function Home() {
     }
   };
 
-  // Function 3: Change Background
-  const changeBackground = async () => {
-    if (currentPostcardIndex < 0 || currentPostcardIndex >= postcards.length) {
+  // Function 3: Change Spine Color
+  const changeSpineColor = async () => {
+    if (currentPassportIndex < 0 || currentPassportIndex >= passports.length) {
       return;
     }
 
     try {
       await connectWallet();
 
-      const currentPostcard = postcards[currentPostcardIndex];
-      const currentBg = currentPostcard.backgroundColor;
-      const currentIndex = backgroundColors.indexOf(currentBg);
-      const nextIndex = (currentIndex + 1) % backgroundColors.length;
-      const newColor = backgroundColors[nextIndex];
+      const currentPassport = passports[currentPassportIndex];
+      const currentColor = currentPassport.spineColor;
+      const currentIndex = spineColors.indexOf(currentColor);
+      const nextIndex = (currentIndex + 1) % spineColors.length;
+      const newColor = spineColors[nextIndex];
 
       const contract = await Tezos.wallet.at(CONTRACT_ADDRESS);
       const op = await contract.methodsObject
-        .set_background({
-          token_id: currentPostcard.tokenId,
+        .set_spine_color({
+          token_id: currentPassport.tokenId,
           color: newColor,
         })
         .send();
@@ -224,7 +225,7 @@ export default function Home() {
 
   // Function 4: Stamp (add flag emoji)
   const stamp = async () => {
-    if (currentPostcardIndex < 0 || currentPostcardIndex >= postcards.length) {
+    if (currentPassportIndex < 0 || currentPassportIndex >= passports.length) {
       return;
     }
 
@@ -249,12 +250,12 @@ export default function Home() {
     try {
       await connectWallet();
 
-      const currentPostcard = postcards[currentPostcardIndex];
+      const currentPassport = passports[currentPassportIndex];
 
       const contract = await Tezos.wallet.at(CONTRACT_ADDRESS);
       const op = await contract.methodsObject
         .stamp({
-          token_id: currentPostcard.tokenId,
+          token_id: currentPassport.tokenId,
           emoji: countryString,
         })
         .send();
@@ -273,18 +274,18 @@ export default function Home() {
     }
   };
 
-  // Step 9 - Use a useEffect to call the loadPostcards function when the page loads initially
+  // Step 9 - Use a useEffect to call the loadPassports function when the page loads initially
   useEffect(() => {
     if (walletAddress) {
-      loadPostcards();
+      loadPassports();
     }
     if (reload) {
       setReload(false);
     }
   }, [reload, walletAddress]);
 
-  const currentPostcard = currentPostcardIndex >= 0 && currentPostcardIndex < postcards.length
-    ? postcards[currentPostcardIndex]
+  const currentPassport = currentPassportIndex >= 0 && currentPassportIndex < passports.length
+    ? passports[currentPassportIndex]
     : null;
 
   return (
@@ -306,22 +307,22 @@ export default function Home() {
         )}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-          <h1>Passport {currentPostcard ? `#${String(currentPostcard.tokenId + 1).padStart(3, '0')}` : '#000'}</h1>
+        <h1>Passport {currentPassport ? `#${String(currentPassport.tokenId + 1).padStart(3, '0')}` : '#000'}</h1>
         <div 
           className="passport-page"
           style={{
-            borderLeftColor: currentPostcard?.backgroundColor || "#8b0000",
+            borderLeftColor: currentPassport?.spineColor || "#8b0000",
           }}
         >
           <div className="passport-header">
             <span>PASSPORT / PASSEPORT</span>
-            <span>TOKEN ID: {currentPostcard ? currentPostcard.tokenId : 'N/A'}</span>
+            <span>TOKEN ID: {currentPassport ? currentPassport.tokenId : 'N/A'}</span>
           </div>
           <div className="passport-body">
             <div className="passport-photo">👤</div>
             <div className="stamps-grid">
-              {currentPostcard && currentPostcard.stamps && currentPostcard.stamps.length > 0 ? (
-                currentPostcard.stamps.map((stamp, index) => (
+              {currentPassport && currentPassport.stamps && currentPassport.stamps.length > 0 ? (
+                currentPassport.stamps.map((stamp, index) => (
                   <span 
                     key={index} 
                     className="passport-stamp"
@@ -343,22 +344,22 @@ export default function Home() {
             <div style={{ marginTop: '5px', color: '#8b0000', fontWeight: 'bold' }}>GHOSTNET PROTOTYPE</div>
           </div>
         </div>
-        {postcards.length > 0 && (
+        {passports.length > 0 && (
           <div className="passport-navigation">
             <button
               className="nav-btn"
-              onClick={() => setCurrentPostcardIndex(Math.max(0, currentPostcardIndex - 1))}
-              disabled={currentPostcardIndex === 0}
+              onClick={() => setCurrentPassportIndex(Math.max(0, currentPassportIndex - 1))}
+              disabled={currentPassportIndex === 0}
             >
               ←
             </button>
             <div className="passport-counter">
-              Passport {currentPostcardIndex + 1} of {postcards.length}
+              Passport {currentPassportIndex + 1} of {passports.length}
             </div>
             <button
               className="nav-btn"
-              onClick={() => setCurrentPostcardIndex(Math.min(postcards.length - 1, currentPostcardIndex + 1))}
-              disabled={currentPostcardIndex === postcards.length - 1}
+              onClick={() => setCurrentPassportIndex(Math.min(passports.length - 1, currentPassportIndex + 1))}
+              disabled={currentPassportIndex === passports.length - 1}
             >
               →
             </button>
@@ -368,23 +369,26 @@ export default function Home() {
           {message || (walletAddress ? "" : "Connect wallet to begin")}
         </div>
         <div className="controls">
-          <button className="btn-action" onClick={mintPostcard}>
+          <button className="btn-action" onClick={mintPassport}>
             Issue Passport (0.1 ꜩ)
           </button>
           <button 
             className="btn-action" 
             onClick={stamp} 
-            disabled={!currentPostcard}
+            disabled={!currentPassport}
           >
             Stamp Page 🕹️
           </button>
           <button 
             className="btn-action" 
-            onClick={changeBackground} 
-            disabled={!currentPostcard}
+            onClick={changeSpineColor} 
+            disabled={!currentPassport}
           >
             Change Spine Color
           </button>
+          <Link href="/browse" style={{ marginTop: '10px', color: '#aaa', textDecoration: 'none', fontSize: '14px' }}>
+            Browse All Passports →
+          </Link>
         </div>
       </div>
     </div>
