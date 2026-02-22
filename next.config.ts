@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: 'export',
   // Use webpack for both dev and build to handle problematic dependencies
   webpack: (config, { isServer }) => {
     // Ignore test files and other non-essential files from node_modules
